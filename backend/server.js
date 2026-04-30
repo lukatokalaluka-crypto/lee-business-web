@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const dotenv = require('dotenv').config();
 const path = require('path');
 const { Pool } = require('pg');
 
@@ -30,11 +31,18 @@ app.use(session({
 // PostgreSQL Connection Pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Required for most cloud DBs like Vercel Postgres/Supabase
+  ssl: process.env.DATABASE_URL 
+    ? { rejectUnauthorized: false }
+    : false
 });
 
-// Initialize Database Table
+// Initialize Database Table (skip if no DB connection)
 const initDb = async () => {
+  if (!process.env.DATABASE_URL) {
+    console.log("No DATABASE_URL - skipping DB init (local dev without PG?)");
+    return;
+  }
+  
   const query = `
     CREATE TABLE IF NOT EXISTS products (
       id SERIAL PRIMARY KEY,
@@ -47,9 +55,9 @@ const initDb = async () => {
   `;
   try {
     await pool.query(query);
-    console.log("Database initialized successfully.");
+    console.log("✅ Database initialized successfully.");
   } catch (err) {
-    console.error("Database init error:", err);
+    console.error("Database init error:", err.message);
   }
 };
 initDb();
@@ -109,7 +117,12 @@ app.get('/admin/dashboard', isAuthenticated, async (req, res) => {
       products: result.rows 
     });
   } catch (err) {
-    res.status(500).send("Error loading dashboard");
+    console.error('PG dashboard error:', err.message);
+    res.render('admin/dashboard', { 
+      websiteName: 'HHMediabusiness',
+      products: [],
+      dbError: 'Database connection issue - empty list shown. Check DATABASE_URL?'
+    });
   }
 });
 
@@ -125,9 +138,10 @@ app.get('/api/logout', (req, res) => {
 
 // API Routes
 app.get('/api/products', async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 12;
+  
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
     const offset = (page - 1) * limit;
 
     const countRes = await pool.query('SELECT COUNT(*) FROM products');
@@ -145,7 +159,15 @@ app.get('/api/products', async (req, res) => {
       currentPage: page 
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('PG error:', err.message);
+    // Graceful fallback for dev
+    res.json({ 
+      products: [], 
+      totalProducts: 0, 
+      totalPages: 1, 
+      currentPage: page,
+      dbError: 'Database unavailable - using fallback. Set DATABASE_URL?'
+    });
   }
 });
 
