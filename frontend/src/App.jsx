@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const API_BASE = '';
+
+
 
 export default function BusinessSite() {
   const [view, setView] = useState('customer');
@@ -14,15 +15,35 @@ export default function BusinessSite() {
   const [editForm, setEditForm] = useState({ name: '', price: '', image: '', category: '' });
   const [addForm, setAddForm] = useState({ name: '', price: '', image: '', category: '' });
 
+  const loadFallbackProducts = async () => {
+    try {
+      const response = await fetch('/data.json');
+      const data = await response.json();
+      setProducts(Array.isArray(data?.products) ? data.products : []);
+    } catch (error) {
+      console.log('Fallback products load error');
+      setProducts([]);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
+
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/products`);
+      const response = await fetch('/api/products');
       const data = await response.json();
+
+      // Use fallback data if backend is down or returns no products.
+      if (!Array.isArray(data?.products) || data.products.length === 0) {
+        await loadFallbackProducts();
+        return;
+      }
+
       setProducts(data.products);
+
     } catch (error) {
       console.log('Fetch products error');
     }
@@ -33,7 +54,8 @@ export default function BusinessSite() {
     setLoading(true);
     setLoginError('');
     try {
-      const response = await fetch(`${API_BASE}/api/login`, {
+      const response = await fetch('/api/login', {
+
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -54,7 +76,8 @@ export default function BusinessSite() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE}/api/logout`);
+      await fetch('/api/logout');
+
     } catch (error) {
       console.log('Logout error');
     }
@@ -67,7 +90,8 @@ export default function BusinessSite() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
-      await fetch(`${API_BASE}/api/products`, {
+      await fetch('/api/products', {
+
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addForm)
@@ -87,7 +111,8 @@ export default function BusinessSite() {
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
-      await fetch(`${API_BASE}/api/products/${editingId}`, {
+      await fetch(`/api/products/${editingId}`, {
+
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm)
@@ -103,7 +128,8 @@ export default function BusinessSite() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this product?')) return;
     try {
-      await fetch(`${API_BASE}/api/products/${id}`, { method: 'DELETE' });
+      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+
       fetchProducts();
     } catch (error) {
       console.log('Delete error');
