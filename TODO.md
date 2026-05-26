@@ -1,20 +1,35 @@
-# Backend-Frontend Linkage Complete ✅
+# TODO - HHMediabusiness React Refactor & Report
 
-## Approved Plan Steps:
-```
-1. [x] Create TODO.md tracking progress
-2. [x] Backend/server.js: Remove static serve & add 404 catch-all  
-3. [x] vercel.json: Update routes for static frontend + API/admin separation
-4. [x] root package.json: Add preview script
-5. [x] Test separate dev servers
-6. [x] Update TODO.md & attempt_completion
-7. [x] Fix Postgres SSL connection error for local dev
-```
+## Step 1: Inspect & confirm current usage
+- [x] Read README and current frontend structure
+- [x] Read Admin/Customer pages and hooks
+- [x] Read current `frontend/src/App.jsx` (monolithic)
 
-## Progress:
-- APIs fully integrated (React → Node/Postgres CRUD + auth) ✓
-- Vite proxy configured ✓
-- Concurrent dev script ready ✓
-- **PG SSL fix in progress**
 
-**Next**: Update backend/server.js Pool config + create .env.example
+## Step 2: Refactor App to use page components
+- [x] Replace monolithic UI/control logic in `frontend/src/App.jsx` with routing/rendering:
+
+  - `/admin` -> AdminLoginPage or AdminDashboardPage based on auth
+  - `/` -> CustomerStorePage
+- [x] Remove duplicated CRUD/login handlers from `App.jsx`
+
+## Step 3: Fix hooks to use Vite proxy paths
+- [x] Update `frontend/src/hooks/useAuth.js` to call relative URLs (`/api/...`) not hardcoded `http://localhost:3001/...`
+- [x] Update `frontend/src/hooks/useProducts.js` to call relative URLs (`/api/...`) not hardcoded `http://localhost:3001/...`
+- [x] Ensure auth cookies/credentials are handled consistently
+
+## Step 4: Wire hooks into page components
+- [x] Pass correct props from `App.jsx` into:
+  - `AdminLoginPage`
+  - `AdminDashboardPage`
+  - `CustomerStorePage`
+- [x] Ensure CRUD actions trigger product refresh and UI messages
+
+## Step 5: Create report
+- [x] Write `REPORT.md` describing before/after architecture, CRUD flow, and how to run
+
+## Step 6: Quick verification
+- [x] `cd frontend && npm run dev` and manual browser checks:
+  - [x] customer store load + search
+  - [x] admin login/logout on `/admin`
+  - [x] CRUD add/edit/delete working

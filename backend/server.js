@@ -3,226 +3,62 @@ const session = require('express-session');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
 const path = require('path');
-const { Pool } = require('pg');
+const pool = require('./db');
+const authRouter = require('./routes/auth');
+const productsRouter = require('./routes/products');
+const adminsRouter = require('./routes/admins');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
 
-// Middleware
-app.use(cors());
+app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.set('trust proxy', 1);
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'secure-random-string-here',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
 
-// Frontend now served separately via Vite/Vercel static
-// Removed: app.use(express.static(path.join(__dirname, '../frontend/dist')));
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'secure-random-string-here',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true 
-  }
-}));
-
-// PostgreSQL Connection Pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL 
-    ? { rejectUnauthorized: false }
-    : false
-});
-
-// Initialize Database Table (skip if no DB connection)
 const initDb = async () => {
-  if (!process.env.DATABASE_URL) {
-    console.log("No DATABASE_URL - skipping DB init (local dev without PG?)");
-    return;
-  }
-  
-  const query = `
-    CREATE TABLE IF NOT EXISTS products (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      price TEXT NOT NULL,
-      image TEXT NOT NULL,
-      category TEXT NOT NULL,
-      description TEXT
-    );
-  `;
   try {
-    await pool.query(query);
-    console.log("✅ Database initialized successfully.");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        price VARCHAR(50) NOT NULL,
+        image TEXT,
+        category VARCHAR(100) NOT NULL,
+        description TEXT
+      );
+    `);
+    console.log('✅ PostgreSQL database initialized.');
   } catch (err) {
-    console.error("Database init error:", err.message);
+    console.error('Failed to initialize database:', err.message);
   }
 };
+
+app.use('/api/auth', authRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/admins', adminsRouter);
+
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'API endpoint not found.' });
+});
+
 initDb();
 
-// Admin middleware
-const isAuthenticated = (req, res, next) => {
-  if (req.session.isAdmin) {
-    return next();
-  }
-  res.redirect('/admin');
-};
-
-// API Admin middleware - returns JSON instead of redirecting
-const isAdminApi = (req, res, next) => {
-  if (req.session.isAdmin) {
-    return next();
-  }
-  res.status(401).json({ success: false, message: 'Unauthorized access' });
-};
-
-// Admin Routes
-app.get('/admin', (req, res) => {
-  if (req.session.isAdmin) {
-    res.redirect('/admin/dashboard');
-  } else {
-    res.render('admin/login', { error: null });
-  }
-});
-
-app.post('/api/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  // Professional check for complete entry (handles null, undefined, and whitespace)
-  if (!email?.trim() || !password?.trim()) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Incomplete entry: Both email and password are required to access the dashboard.' 
-    });
-  }
-
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'business@gmail.com';
-  const ADMIN_PASS = process.env.ADMIN_PASSWORD || '123456';
-
-  if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-    req.session.isAdmin = true;
-    res.json({ success: true, token: 'admin-token-123' });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid email or password' });
-  }
-});
-
-app.get('/admin/dashboard', isAuthenticated, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM products ORDER BY id DESC');
-    res.render('admin/dashboard', { 
-      websiteName: 'HHMediabusiness',
-      products: result.rows 
-    });
-  } catch (err) {
-    console.error('PG dashboard error:', err.message);
-    res.render('admin/dashboard', { 
-      websiteName: 'HHMediabusiness',
-      products: [],
-      dbError: 'Database connection issue - empty list shown. Check DATABASE_URL?'
-    });
-  }
-});
-
-app.get('/admin/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/admin');
-});
-
-app.get('/api/logout', (req, res) => {
-  req.session.destroy();
-  res.json({ success: true });
-});
-
-// API Routes
-app.get('/api/products', async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 12;
-  
-  try {
-    const offset = (page - 1) * limit;
-
-    const countRes = await pool.query('SELECT COUNT(*) FROM products');
-    const productsRes = await pool.query(
-      'SELECT * FROM products ORDER BY id DESC LIMIT $1 OFFSET $2',
-      [limit, offset]
-    );
-
-    const totalProducts = parseInt(countRes.rows[0].count);
-    
-    res.json({ 
-      products: productsRes.rows, 
-      totalProducts, 
-      totalPages: Math.ceil(totalProducts / limit), 
-      currentPage: page 
-    });
-  } catch (err) {
-    console.error('PG error:', err.message);
-    // Graceful fallback for dev
-    res.json({ 
-      products: [], 
-      totalProducts: 0, 
-      totalPages: 1, 
-      currentPage: page,
-      dbError: 'Database unavailable - using fallback. Set DATABASE_URL?'
-    });
-  }
-});
-
-app.post('/api/products', isAdminApi, async (req, res) => {
-  try {
-    const { name, price, image, category, description } = req.body;
-    const result = await pool.query(
-      'INSERT INTO products (name, price, image, category, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, price, image, category, description || '']
-    );
-    res.json({ success: true, product: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.put('/api/products/:id', isAdminApi, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const { name, price, image, category, description } = req.body;
-    const result = await pool.query(
-      'UPDATE products SET name=$1, price=$2, image=$3, category=$4, description=$5 WHERE id=$6',
-      [name, price, image, category, description || '', id]
-    );
-    
-    if (result.rowCount > 0) {
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ success: false, message: 'Product not found' });
-    }
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.delete('/api/products/:id', isAdminApi, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    await pool.query('DELETE FROM products WHERE id = $1', [id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// Backend API/Admin only - Frontend served separately (Vite/Vercel static)
-
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'API/Admin endpoint not found. Use /api/* or /admin/*' });
-});
-
 app.listen(PORT, () => {
-  console.log(`Backend API/Admin server running on http://localhost:${PORT}`);
-  console.log(`Admin Panel: http://localhost:${PORT}/admin`);
-  console.log(`Admin API: http://localhost:${PORT}/api/login (email: business@gmail.com, pass: 123456)`);
-  console.log(`Public API: http://localhost:${PORT}/api/products`);
-  console.log(`Frontend (separate): http://localhost:5173`);
+  console.log(`Backend API server running on http://localhost:${PORT}`);
+  console.log(`Client origin is ${CLIENT_ORIGIN}`);
 });

@@ -2,24 +2,83 @@
   "products": [
     {
       "id": 1,
-      "name": "OS Installation",
-      "price": "250.00",
-      "image": "https://img.icons8.com/fluency/96/windows-11.png",
-      "category": "Software"
+      "name": "HP Pavilion Laptop",
+      "price": "4,500",
+      "image": "https://via.placeholder.com/200?text=HP+Laptop",
+      "category": "Electronics",
+      "description": "High-performance laptop with 16GB RAM and 512GB SSD"
     },
     {
       "id": 2,
-      "name": "Data Recovery",
-      "price": "400.00",
-      "image": "https://img.icons8.com/fluency/96/hard-drive.png",
-      "category": "Storage"
+      "name": "Windows 11 Pro",
+      "price": "2,500",
+      "image": "https://via.placeholder.com/200?text=Windows+11",
+      "category": "Software",
+      "description": "Genuine Windows 11 Pro operating system license"
     },
     {
       "id": 3,
-      "name": "System Optimization",
-      "price": "150.00",
-      "image": "https://img.icons8.com/fluency/96/speed.png",
-      "category": "Software"
+      "name": "USB-C Hub Adapter",
+      "price": "800",
+      "image": "https://via.placeholder.com/200?text=USB+Hub",
+      "category": "Accessories",
+      "description": "Multi-port USB-C hub with HDMI, USB 3.0, and SD card reader"
+    },
+    {
+      "id": 4,
+      "name": "System Optimization Service",
+      "price": "1,500",
+      "image": "https://via.placeholder.com/200?text=Optimization",
+      "category": "Services",
+      "description": "Professional system cleanup and performance optimization"
+    },
+    {
+      "id": 5,
+      "name": "External Hard Drive 2TB",
+      "price": "3,200",
+      "image": "https://via.placeholder.com/200?text=HDD+2TB",
+      "category": "Hardware",
+      "description": "Portable 2TB external hard drive for backup and storage"
+    },
+    {
+      "id": 6,
+      "name": "Mechanical Keyboard RGB",
+      "price": "1,200",
+      "image": "https://via.placeholder.com/200?text=Keyboard",
+      "category": "Accessories",
+      "description": "Mechanical gaming keyboard with RGB lighting and mechanical switches"
+    },
+    {
+      "id": 7,
+      "name": "Data Recovery Service",
+      "price": "3,500",
+      "image": "https://via.placeholder.com/200?text=Recovery",
+      "category": "Services",
+      "description": "Professional data recovery for damaged or corrupted drives"
+    },
+    {
+      "id": 8,
+      "name": "Wireless Mouse Pro",
+      "price": "600",
+      "image": "https://via.placeholder.com/200?text=Mouse",
+      "category": "Accessories",
+      "description": "Precision wireless mouse with extended battery life"
+    },
+    {
+      "id": 9,
+      "name": "Thunderbolt Cable",
+      "price": "350",
+      "image": "https://via.placeholder.com/200?text=Cable",
+      "category": "Accessories",
+      "description": "1m Thunderbolt 3 cable for ultra-fast data transfer"
+    },
+    {
+      "id": 10,
+      "name": "McAfee Total Protection",
+      "price": "1,800",
+      "image": "https://via.placeholder.com/200?text=McAfee",
+      "category": "Software",
+      "description": "1-year McAfee antivirus and cybersecurity protection"
     }
   ]
 }
