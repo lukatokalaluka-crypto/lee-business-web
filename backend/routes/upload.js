@@ -42,8 +42,9 @@ router.post('/', isAdminApi, upload.single('image'), async (req, res) => {
     const result = await uploadFromBuffer(req.file.buffer);
     return res.json({ success: true, url: result.secure_url });
   } catch (err) {
-    console.error('Cloudinary upload error:', err.message);
-    return res.status(500).json({ success: false, message: 'Failed to upload image to Cloudinary.' });
+    console.error('Cloudinary upload error:', err);
+    const errorMessage = err?.message || 'Failed to upload image to Cloudinary.';
+    return res.status(500).json({ success: false, message: errorMessage });
   }
 });
 

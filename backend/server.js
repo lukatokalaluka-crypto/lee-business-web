@@ -49,10 +49,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
-const shouldUseSecureCookie =
-  process.env.NODE_ENV === 'production' ||
-  /https:\/\//.test(CLIENT_ORIGINS) ||
-  /https:\/\//.test(CLIENT_ORIGIN);
+const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(
   session({
@@ -60,9 +57,9 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: shouldUseSecureCookie,
+      secure: isProduction,
       httpOnly: true,
-      sameSite: shouldUseSecureCookie ? 'none' : 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
