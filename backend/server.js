@@ -12,13 +12,14 @@ const uploadRouter = require('./routes/upload');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+const CLIENT_ORIGINS = process.env.CLIENT_ORIGINS || CLIENT_ORIGIN;
 
 // CORS must allow the exact requesting origin when using cookies (credentials: true).
 // We support both:
 // 1) a single configured origin (CLIENT_ORIGIN)
 // 2) multiple comma-separated origins (CLIENT_ORIGINS)
 // 3) allow localhost/127.0.0.1 during development.
-const envOrigins = (process.env.CLIENT_ORIGINS || CLIENT_ORIGIN)
+const envOrigins = CLIENT_ORIGINS
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -48,15 +49,20 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
+const shouldUseSecureCookie =
+  process.env.NODE_ENV === 'production' ||
+  /https:\/\//.test(CLIENT_ORIGINS) ||
+  /https:\/\//.test(CLIENT_ORIGIN);
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'secure-random-string-here',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: shouldUseSecureCookie,
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: shouldUseSecureCookie ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
