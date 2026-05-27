@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { globalStyles, colors } from '../styles/common.js';
 
 const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, error }) => {
@@ -260,13 +261,23 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
             <div style={styles.productsGrid}>
               {filteredProducts.map((product) => (
                 <div key={product.id} style={styles.productCard}>
-                  {product.image && <img src={product.image} alt={product.name} style={styles.productImage} />}
+                  {product.image ? (
+                    <Link to={`/product/${product.id}`}>
+                      <img src={product.image} alt={product.name} style={styles.productImage} />
+                    </Link>
+                  ) : null}
                   <div style={styles.productContent}>
                     <span style={styles.productCategory}>{product.category}</span>
-                    <h3 style={styles.productName}>{product.name}</h3>
+                    <h3 style={styles.productName}>
+                      <Link to={`/product/${product.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        {product.name}
+                      </Link>
+                    </h3>
                     <div style={styles.productPrice}>{product.price.toLocaleString()}K</div>
                     {product.description && <p style={styles.productDesc}>{product.description}</p>}
-                    <button style={styles.viewBtn}>View Details</button>
+                    <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', width: '100%' }}>
+                      <button style={styles.viewBtn}>View Details</button>
+                    </Link>
                   </div>
                 </div>
               ))}

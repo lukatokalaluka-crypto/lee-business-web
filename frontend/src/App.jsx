@@ -5,6 +5,7 @@ import useProducts from './hooks/useProducts';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CustomerStorePage from './pages/CustomerStorePage';
+import ProductDetailPage from './pages/ProductDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
@@ -125,6 +126,7 @@ export default function App() {
           }
         />
         <Route path="*" element={<NotFoundPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
       </Routes>
     </Router>
   );
