@@ -12,7 +12,38 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
 
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+// CORS must allow the exact requesting origin when using cookies (credentials: true).
+// We support both:
+// 1) a single configured origin (CLIENT_ORIGIN)
+// 2) multiple comma-separated origins (CLIENT_ORIGINS)
+// 3) allow localhost/127.0.0.1 during development.
+const envOrigins = (process.env.CLIENT_ORIGINS || CLIENT_ORIGIN)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const localDevOrigins = process.env.NODE_ENV === 'production' ? [] : [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
+const allowedOrigins = Array.from(new Set([...envOrigins, ...localDevOrigins]));
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Non-browser requests (curl, server-to-server) may not send an origin header.
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      return callback(new Error(`Blocked by CORS. Origin: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
