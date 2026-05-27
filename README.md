@@ -92,10 +92,28 @@ Frontend runs on `http://localhost:3000`
 ```
 PORT=3001
 DATABASE_URL=postgresql://user:password@localhost:5432/hhmedia
-ADMIN_EMAIL=business@gmail.com
-ADMIN_PASSWORD=123456
+CLIENT_ORIGIN=http://localhost:3000
+# Optional: allow additional origins in production
+# CLIENT_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
 SESSION_SECRET=your-secret-key
 NODE_ENV=development
+```
+
+### Frontend (.env)
+```
+VITE_API_BASE=http://localhost:3001
+VITE_BASE=/
+```
+
+### Production deployment notes
+- If your backend is hosted on Render and frontend on Vercel, set `VITE_API_BASE` to your Render backend URL.
+- Use `CLIENT_ORIGIN` on the backend for one allowed frontend origin, or `CLIENT_ORIGINS` for multiple origins.
+- Example for Render backend and Vercel frontend:
+```
+NODE_ENV=production
+DATABASE_URL=your-postgres-connection-string
+CLIENT_ORIGINS=https://your-frontend.vercel.app,http://localhost:3000
+SESSION_SECRET=your-secure-session-secret
 ```
 
 ## 🎨 UI Components
