@@ -10,11 +10,33 @@ const isAdminApi = (req, res, next) => {
   return res.status(401).json({ success: false, message: 'Unauthorized access' });
 };
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const isValidCloudinaryName = (name) =>
+  typeof name === 'string' &&
+  name.trim() !== '' &&
+  name.trim().toLowerCase() !== 'root' &&
+  !name.includes(' ') &&
+  !name.toLowerCase().includes('your_');
+
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const cloudApiKey = process.env.CLOUDINARY_API_KEY;
+const cloudApiSecret = process.env.CLOUDINARY_API_SECRET;
+
+const isCloudinaryConfigured =
+  isValidCloudinaryName(cloudName) && Boolean(cloudApiKey) && Boolean(cloudApiSecret);
+
+if (!isCloudinaryConfigured) {
+  console.error('Cloudinary configuration is invalid:', {
+    cloudName,
+    apiKeyPresent: Boolean(cloudApiKey),
+    apiSecretPresent: Boolean(cloudApiSecret),
+  });
+} else {
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: cloudApiKey,
+    api_secret: cloudApiSecret,
+  });
+}
 
 const uploadFromBuffer = (buffer) =>
   new Promise((resolve, reject) => {
@@ -34,8 +56,12 @@ router.post('/', isAdminApi, upload.single('image'), async (req, res) => {
     return res.status(400).json({ success: false, message: 'Image file is required.' });
   }
 
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-    return res.status(500).json({ success: false, message: 'Cloudinary is not configured.' });
+  if (!isCloudinaryConfigured) {
+    return res.status(500).json({
+      success: false,
+      message:
+        'Cloudinary is not configured correctly. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET with valid values.',
+    });
   }
 
   try {
