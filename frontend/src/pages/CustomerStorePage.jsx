@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { globalStyles, colors } from '../styles/common.js';
 
 const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, error }) => {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedPriceRange, setSelectedPriceRange] = useState('all');
+
+  const categories = useMemo(
+    () => ['all', ...Array.from(new Set(products.map((product) => product.category)))],
+    [products]
+  );
+
   const filteredProducts = products.filter((product) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       product.name.toLowerCase().includes(searchLower) ||
       product.category.toLowerCase().includes(searchLower) ||
-      (product.description && product.description.toLowerCase().includes(searchLower))
-    );
+      (product.description && product.description.toLowerCase().includes(searchLower));
+
+    const matchesCategory =
+      selectedCategory === 'all' || product.category === selectedCategory;
+
+    const price = Number(product.price);
+    const matchesPriceRange =
+      selectedPriceRange === 'all' ||
+      (selectedPriceRange === 'under100' && price < 100) ||
+      (selectedPriceRange === '100-200' && price >= 100 && price <= 200) ||
+      (selectedPriceRange === 'over200' && price > 200);
+
+    return matchesSearch && matchesCategory && matchesPriceRange;
   });
 
   const styles = {
@@ -43,15 +62,52 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
     searchContainer: {
       marginBottom: '1rem',
     },
-    searchInput: {
+    filterPanel: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '1rem',
+      alignItems: 'end',
+      marginBottom: '1.5rem',
+      maxWidth: '820px',
+    },
+    filterGroup: {
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    filterLabel: {
+      marginBottom: '0.5rem',
+      color: '#cbd5e1',
+      fontSize: '0.95rem',
+      fontWeight: 600,
+    },
+    filterSelect: {
       ...globalStyles.input,
       width: '100%',
-      maxWidth: '500px',
-      padding: '0.85rem 1rem',
-      background: 'rgba(255, 255, 255, 0.95)',
-      color: '#0f172a',
-      border: '2px solid white',
-      fontSize: '1rem',
+      padding: '0.9rem 1rem',
+      background: '#0f172a',
+      color: '#e2e8f0',
+      border: '1px solid rgba(148, 163, 184, 0.25)',
+    },
+    whatsappButton: {
+      position: 'fixed',
+      right: '1.5rem',
+      bottom: '1.5rem',
+      zIndex: 50,
+      width: '56px',
+      height: '56px',
+      borderRadius: '50%',
+      background: '#25D366',
+      boxShadow: '0 18px 30px rgba(37, 211, 102, 0.25)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'white',
+      textDecoration: 'none',
+      fontSize: '1.4rem',
+      transition: 'transform 0.2s ease',
+    },
+    whatsappButtonHover: {
+      transform: 'scale(1.05)',
     },
     main: {
       maxWidth: '1200px',
@@ -211,6 +267,8 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
     },
   };
 
+  const whatsappLink = 'https://wa.me/1234567890?text=Hello%2C%20I%27m%20interested%20in%20a%20product%20from%20your%20store.';
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -225,6 +283,37 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
               onChange={(e) => onSearchChange(e.target.value)}
               style={styles.searchInput}
             />
+          </div>
+          <div style={styles.filterPanel}>
+            <div style={styles.filterGroup}>
+              <label htmlFor="category-filter" style={styles.filterLabel}>Product type</label>
+              <select
+                id="category-filter"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={styles.filterSelect}
+              >
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category === 'all' ? 'All types' : category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={styles.filterGroup}>
+              <label htmlFor="price-filter" style={styles.filterLabel}>Price range</label>
+              <select
+                id="price-filter"
+                value={selectedPriceRange}
+                onChange={(e) => setSelectedPriceRange(e.target.value)}
+                style={styles.filterSelect}
+              >
+                <option value="all">All prices</option>
+                <option value="under100">Under K100</option>
+                <option value="100-200">K100 - K200</option>
+                <option value="over200">Over K200</option>
+              </select>
+            </div>
           </div>
           {loading && (
             <div style={{ color: '#cbd5e1', marginTop: '0.75rem' }}>
@@ -273,7 +362,7 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
                         {product.name}
                       </Link>
                     </h3>
-                    <div style={styles.productPrice}>{product.price.toLocaleString()}K</div>
+                    <div style={styles.productPrice}>{`K${product.price}`}</div>
                     {product.description && <p style={styles.productDesc}>{product.description}</p>}
                     <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', width: '100%' }}>
                       <button style={styles.viewBtn}>View Details</button>
@@ -285,6 +374,16 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
           )}
         </div>
       </div>
+
+      <a
+        href={whatsappLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contact us on WhatsApp"
+        style={styles.whatsappButton}
+      >
+        💬
+      </a>
 
       <footer style={styles.footer}>
         <div style={styles.footerContent}>

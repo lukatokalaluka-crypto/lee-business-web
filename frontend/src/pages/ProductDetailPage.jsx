@@ -36,14 +36,29 @@ const ProductDetailPage = () => {
   if (!product) return <div style={{ padding: '2rem' }}>Product not found.</div>
 
   const styles = {
-    container: { maxWidth: 900, margin: '2rem auto', padding: '1rem' },
-    card: { display: 'flex', gap: '1.5rem', alignItems: 'flex-start' },
-    image: { width: 360, height: 260, objectFit: 'cover', borderRadius: 8, background: '#111827' },
+    container: {
+      maxWidth: 900,
+      margin: '2rem auto',
+      padding: '1rem',
+      background: 'linear-gradient(180deg, #020617 0%, #111827 100%)',
+      borderRadius: 16,
+      boxShadow: '0 30px 70px rgba(15, 23, 42, 0.45)',
+      color: '#e2e8f0',
+    },
+    card: {
+      display: 'flex',
+      gap: '1.5rem',
+      alignItems: 'flex-start',
+      background: '#0f172a',
+      padding: '1.5rem',
+      borderRadius: 20,
+    },
+    image: { width: 360, height: 260, objectFit: 'cover', borderRadius: 16, background: '#111827' },
     info: { flex: 1 },
-    title: { margin: 0, fontSize: '1.8rem', color: '#f8fafc' },
-    category: { color: '#93c5fd', marginTop: '0.5rem' },
-    price: { fontSize: '1.4rem', color: colors.primary, marginTop: '0.75rem', fontWeight: 700 },
-    desc: { marginTop: '1rem', color: '#cbd5e1', lineHeight: 1.6 },
+    title: { margin: 0, fontSize: '2rem', color: '#f8fafc' },
+    category: { color: '#93c5fd', marginTop: '0.5rem', fontSize: '0.95rem', letterSpacing: '0.02em' },
+    price: { fontSize: '1.6rem', color: colors.primary, marginTop: '0.75rem', fontWeight: 700 },
+    desc: { marginTop: '1rem', color: '#cbd5e1', lineHeight: 1.7 },
     back: { display: 'inline-block', marginBottom: '1rem', color: '#93c5fd', textDecoration: 'none' },
   }
 
@@ -60,7 +75,7 @@ const ProductDetailPage = () => {
         <div style={styles.info}>
           <h1 style={styles.title}>{product.name}</h1>
           <div style={styles.category}>{product.category}</div>
-          <div style={styles.price}>{Number(product.price).toLocaleString()}K</div>
+          <div style={styles.price}>{`K${Number(product.price)}`}</div>
           {product.description && <p style={styles.desc}>{product.description}</p>}
         </div>
       </div>
