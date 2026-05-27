@@ -1,3 +1,3 @@
-const API_BASE = import.meta.env.VITE_API_BASE?.replace(/\/$/, '') || '';
+const API_BASE = import.meta.env.VITE_API_BASE?.replace(/\/$/, '') || '/api';
 
 export const apiUrl = (path) => `${API_BASE}${path}`;
