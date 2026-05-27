@@ -13,7 +13,7 @@ export default ({ mode }) => {
       proxy: {
         '/api': {
           target: apiProxyTarget,
-          changeOrigin: true,
+          changeOrigin:false,
           secure:true, 
         },
       },
