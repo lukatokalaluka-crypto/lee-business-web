@@ -21,14 +21,53 @@ const AdminDashboardPage = ({
     description: '',
     image: '',
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState(null);
 
   const handleFormChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleImageFileChange = async (file) => {
+    setImageUploadError(null);
+    setImageFile(null);
+
+    if (!file) {
+      return;
+    }
+
+    setUploadingImage(true);
+    const uploadData = new FormData();
+    uploadData.append('image', file);
+
+    try {
+      const response = await fetch(apiUrl('/api/upload'), {
+        method: 'POST',
+        credentials: 'include',
+        body: uploadData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Image upload failed');
+      }
+
+      setImageFile(file);
+      setFormData((prev) => ({ ...prev, image: data.url }));
+    } catch (err) {
+      console.error('Image upload error:', err);
+      setImageUploadError(err.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleAddClick = () => {
     setShowAddForm(true);
     setEditingId(null);
+    setImageFile(null);
+    setImageUploadError(null);
     setFormData({
       name: '',
       price: '',
@@ -41,6 +80,8 @@ const AdminDashboardPage = ({
   const handleEditClick = (product) => {
     setEditingId(product.id);
     setShowAddForm(true);
+    setImageFile(null);
+    setImageUploadError(null);
     setFormData({
       name: product.name,
       price: product.price.toString(),
@@ -469,6 +510,24 @@ const AdminDashboardPage = ({
                 placeholder="https://..."
                 style={styles.input}
               />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Upload Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageFileChange(e.target.files?.[0])}
+                style={styles.input}
+              />
+              {uploadingImage && (
+                <p style={{ color: '#93c5fd', marginTop: '0.5rem' }}>Uploading image...</p>
+              )}
+              {imageUploadError && (
+                <div style={{ ...globalStyles.messageBox, ...globalStyles.errorMessage, marginTop: '0.5rem' }}>
+                  {imageUploadError}
+                </div>
+              )}
             </div>
 
             <div style={{ ...styles.formGroup, gridColumn: '1 / -1' }}>

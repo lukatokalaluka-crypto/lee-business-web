@@ -97,6 +97,11 @@ CLIENT_ORIGIN=http://localhost:3000
 # CLIENT_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
 SESSION_SECRET=your-secret-key
 NODE_ENV=development
+
+# Cloudinary image uploads
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ### Frontend (.env)

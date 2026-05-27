@@ -7,6 +7,7 @@ const pool = require('./db');
 const authRouter = require('./routes/auth');
 const productsRouter = require('./routes/products');
 const adminsRouter = require('./routes/admins');
+const uploadRouter = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -82,6 +83,7 @@ const initDb = async () => {
 app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/admins', adminsRouter);
+app.use('/api/upload', uploadRouter);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'API endpoint not found.' });
