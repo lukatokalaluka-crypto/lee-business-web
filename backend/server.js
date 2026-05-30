@@ -37,9 +37,10 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Non-browser requests (curl, server-to-server) may not send an origin header.
-      if (!origin) return callback(null, true);
+          if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow configured origins or any localhost / 127.0.0.1 origin (any port)
+      if (allowedOrigins.includes(origin) || origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
 
       return callback(new Error(`Blocked by CORS. Origin: ${origin}`));
     },

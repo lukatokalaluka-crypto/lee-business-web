@@ -10,6 +10,7 @@ const ProductDetailPage = () => {
   const [error, setError] = useState(null)
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -56,7 +57,6 @@ const ProductDetailPage = () => {
   const whatsappLink = `https://api.whatsapp.com/send?text=${encodedText}%0A${pageUrl}`;
   const facebookLink = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${encodedText}`;
   const twitterLink = `https://twitter.com/intent/tweet?url=${pageUrl}&text=${encodedText}`;
-  const [copySuccess, setCopySuccess] = useState(false);
 
   const handleCopyLink = async () => {
     const url = window.location.href;
