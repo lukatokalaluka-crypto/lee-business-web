@@ -56,6 +56,27 @@ const ProductDetailPage = () => {
   const whatsappLink = `https://api.whatsapp.com/send?text=${encodedText}%0A${pageUrl}`;
   const facebookLink = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${encodedText}`;
   const twitterLink = `https://twitter.com/intent/tweet?url=${pageUrl}&text=${encodedText}`;
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const handleCopyLink = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+  };
 
   const styles = {
     container: {
@@ -176,6 +197,14 @@ const ProductDetailPage = () => {
             <a href={twitterLink} target="_blank" rel="noopener noreferrer" style={styles.shareButton}>
               Twitter
             </a>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              aria-label="Copy product link"
+              style={styles.shareButton}
+            >
+              {copySuccess ? 'Copied!' : 'Copy link'}
+            </button>
           </div>
         </div>
       </div>

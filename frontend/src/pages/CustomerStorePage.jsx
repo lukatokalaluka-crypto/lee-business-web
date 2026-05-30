@@ -176,6 +176,19 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
       color: colors.primary,
       marginBottom: '0.75rem',
     },
+    productOriginalPrice: {
+      fontSize: '1rem',
+      color: '#94a3b8',
+      textDecoration: 'line-through',
+      marginRight: '0.6rem',
+    },
+    priceRow: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      marginBottom: '0.75rem',
+      flexWrap: 'wrap',
+    },
     productDesc: {
       fontSize: '0.9rem',
       color: '#cbd5e1',
@@ -362,7 +375,12 @@ const CustomerStorePage = ({ products, onSearchChange, searchTerm, loading, erro
                         {product.name}
                       </Link>
                     </h3>
-                    <div style={styles.productPrice}>{`K${product.price}`}</div>
+                    <div style={styles.priceRow}>
+                      {product.original_price ? (
+                        <span style={styles.productOriginalPrice}>{`K${Number(product.original_price)}`}</span>
+                      ) : null}
+                      <span style={styles.productPrice}>{`K${Number(product.price)}`}</span>
+                    </div>
                     {product.description && <p style={styles.productDesc}>{product.description}</p>}
                     <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', width: '100%' }}>
                       <button style={styles.viewBtn}>View Details</button>
