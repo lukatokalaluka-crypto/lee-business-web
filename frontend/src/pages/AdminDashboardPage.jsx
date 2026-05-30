@@ -17,86 +17,128 @@ const AdminDashboardPage = ({
   const [formData, setFormData] = useState({
     name: '',
     price: '',
+    originalPrice: '',
     category: 'Electronics',
     description: '',
     image: '',
+    images: [],
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [imageUploadError, setImageUploadError] = useState(null);
 
   const handleFormChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleImageFileChange = async (file) => {
+  const handleImageFilesChange = async (files) => {
     setImageUploadError(null);
-    setImageFile(null);
+    const fileList = Array.from(files || []);
+    if (fileList.length === 0) return;
 
-    if (!file) {
-      return;
-    }
-
-    setUploadingImage(true);
-    const uploadData = new FormData();
-    uploadData.append('image', file);
-
+    setUploadingImages(true);
+    const uploadedUrls = [];
     try {
-      const response = await fetch(apiUrl('/api/upload'), {
-        method: 'POST',
-        credentials: 'include',
-        body: uploadData,
-      });
+      for (let i = 0; i < Math.min(fileList.length, 5); i += 1) {
+        const uploadData = new FormData();
+        uploadData.append('image', fileList[i]);
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Image upload failed');
+        const response = await fetch(apiUrl('/api/upload'), {
+          method: 'POST',
+          credentials: 'include',
+          body: uploadData,
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || 'Image upload failed');
+        }
+
+        uploadedUrls.push(data.url);
       }
 
-      setImageFile(file);
-      setFormData((prev) => ({ ...prev, image: data.url }));
+      setFormData((prev) => {
+        const nextImages = [...new Set([...(prev.images || []), ...uploadedUrls])].slice(0, 5);
+        return {
+          ...prev,
+          images: nextImages,
+          image: prev.image || nextImages[0] || '',
+        };
+      });
     } catch (err) {
       console.error('Image upload error:', err);
-      setImageUploadError(err.message || 'Failed to upload image');
+      setImageUploadError(err.message || 'Failed to upload image(s)');
     } finally {
-      setUploadingImage(false);
+      setUploadingImages(false);
     }
+  };
+
+  const handleRemoveImage = (index) => {
+    setFormData((prev) => {
+      const nextImages = [...(prev.images || [])];
+      nextImages.splice(index, 1);
+      return {
+        ...prev,
+        images: nextImages,
+        image: nextImages[0] || prev.image || '',
+      };
+    });
   };
 
   const handleAddClick = () => {
     setShowAddForm(true);
     setEditingId(null);
-    setImageFile(null);
     setImageUploadError(null);
     setFormData({
       name: '',
       price: '',
+      originalPrice: '',
       category: 'Electronics',
       description: '',
       image: '',
+      images: [],
     });
   };
 
   const handleEditClick = (product) => {
+    const parsedImages = Array.isArray(product.images)
+      ? product.images
+      : product.images
+      ? (() => {
+          try {
+            const parsed = JSON.parse(product.images);
+            return Array.isArray(parsed) ? parsed : [parsed];
+          } catch {
+            return [product.images];
+          }
+        })()
+      : [];
+
     setEditingId(product.id);
     setShowAddForm(true);
-    setImageFile(null);
     setImageUploadError(null);
     setFormData({
       name: product.name,
-      price: product.price.toString(),
+      price: product.price?.toString() || '',
+      originalPrice: product.original_price?.toString() || '',
       category: product.category,
       description: product.description || '',
-      image: product.image || '',
+      image: product.image || parsedImages[0] || '',
+      images: parsedImages,
     });
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+    const finalData = {
+      ...formData,
+      image: formData.image || (formData.images && formData.images[0]) || '',
+      original_price: formData.originalPrice || '',
+    };
+
     if (editingId) {
-      onUpdateProduct(editingId, formData);
+      onUpdateProduct(editingId, finalData);
     } else {
-      onAddProduct(formData);
+      onAddProduct(finalData);
     }
     setShowAddForm(false);
   };
@@ -185,6 +227,39 @@ const AdminDashboardPage = ({
       minHeight: '100px',
       resize: 'vertical',
     },
+    imagePreviewList: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '0.75rem',
+      marginTop: '0.75rem',
+    },
+    imagePreviewItem: {
+      position: 'relative',
+      width: '90px',
+      height: '90px',
+      borderRadius: '10px',
+      overflow: 'hidden',
+      border: '1px solid rgba(148, 163, 184, 0.2)',
+    },
+    previewThumb: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      display: 'block',
+    },
+    removeImageBtn: {
+      position: 'absolute',
+      bottom: '0.4rem',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: 'rgba(15, 23, 42, 0.85)',
+      color: '#f8fafc',
+      border: 'none',
+      borderRadius: '999px',
+      padding: '0.25rem 0.5rem',
+      cursor: 'pointer',
+      fontSize: '0.75rem',
+    },
     formButtonGroup: {
       display: 'flex',
       gap: '1rem',
@@ -243,6 +318,12 @@ const AdminDashboardPage = ({
       fontWeight: 700,
       color: colors.primary,
       marginBottom: '0.75rem',
+    },
+    productOriginalPrice: {
+      fontSize: '0.95rem',
+      color: '#94a3b8',
+      textDecoration: 'line-through',
+      marginRight: '0.75rem',
     },
     productDesc: {
       fontSize: '0.9rem',
@@ -475,13 +556,24 @@ const AdminDashboardPage = ({
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Price (in K)</label>
+              <label style={styles.label}>Current Price (in K)</label>
               <input
                 type="number"
                 value={formData.price}
                 onChange={(e) => handleFormChange('price', e.target.value)}
                 placeholder="e.g., 4500"
                 required
+                style={styles.input}
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Original Price (optional)</label>
+              <input
+                type="number"
+                value={formData.originalPrice}
+                onChange={(e) => handleFormChange('originalPrice', e.target.value)}
+                placeholder="e.g., 5000"
                 style={styles.input}
               />
             </div>
@@ -502,7 +594,7 @@ const AdminDashboardPage = ({
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Image URL</label>
+              <label style={styles.label}>Main Image URL</label>
               <input
                 type="url"
                 value={formData.image}
@@ -513,19 +605,32 @@ const AdminDashboardPage = ({
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Upload Image</label>
+              <label style={styles.label}>Upload up to 5 images</label>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleImageFileChange(e.target.files?.[0])}
+                multiple
+                onChange={(e) => handleImageFilesChange(e.target.files)}
                 style={styles.input}
               />
-              {uploadingImage && (
-                <p style={{ color: '#93c5fd', marginTop: '0.5rem' }}>Uploading image...</p>
+              {uploadingImages && (
+                <p style={{ color: '#93c5fd', marginTop: '0.5rem' }}>Uploading images...</p>
               )}
               {imageUploadError && (
                 <div style={{ ...globalStyles.messageBox, ...globalStyles.errorMessage, marginTop: '0.5rem' }}>
                   {imageUploadError}
+                </div>
+              )}
+              {formData.images?.length > 0 && (
+                <div style={styles.imagePreviewList}>
+                  {formData.images.map((url, index) => (
+                    <div key={url + index} style={styles.imagePreviewItem}>
+                      <img src={url} alt={`Product preview ${index + 1}`} style={styles.previewThumb} />
+                      <button type="button" onClick={() => handleRemoveImage(index)} style={styles.removeImageBtn}>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -569,7 +674,12 @@ const AdminDashboardPage = ({
                 <div style={styles.productContent}>
                   <h3 style={styles.productName}>{product.name}</h3>
                   <span style={styles.productCategory}>{product.category}</span>
-                  <div style={styles.productPrice}>{product.price.toLocaleString()}K</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                    {product.original_price && (
+                      <span style={styles.productOriginalPrice}>{`${Number(product.original_price).toLocaleString()}K`}</span>
+                    )}
+                    <span style={styles.productPrice}>{`${Number(product.price).toLocaleString()}K`}</span>
+                  </div>
                   {product.description && <p style={styles.productDesc}>{product.description}</p>}
                   <div style={styles.productActions}>
                     <button

@@ -35,11 +35,13 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', isAdminApi, async (req, res) => {
-  const { name, price, image, category, description } = req.body;
+  const { name, price, original_price, image, category, description, images } = req.body;
+  const imagesJson = Array.isArray(images) ? JSON.stringify(images) : images || '[]';
+  const primaryImage = image || (Array.isArray(images) && images.length > 0 ? images[0] : '');
   try {
     const result = await pool.query(
-      'INSERT INTO products (name, price, image, category, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, price, image || '', category, description || '']
+      'INSERT INTO products (name, price, original_price, image, images, category, description) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [name, price, original_price || '', primaryImage, imagesJson, category, description || '']
     );
     res.json({ success: true, product: result.rows[0] });
   } catch (err) {
@@ -50,11 +52,13 @@ router.post('/', isAdminApi, async (req, res) => {
 
 router.put('/:id', isAdminApi, async (req, res) => {
   const productId = Number(req.params.id);
-  const { name, price, image, category, description } = req.body;
+  const { name, price, original_price, image, category, description, images } = req.body;
+  const imagesJson = Array.isArray(images) ? JSON.stringify(images) : images || '[]';
+  const primaryImage = image || (Array.isArray(images) && images.length > 0 ? images[0] : '');
   try {
     const result = await pool.query(
-      'UPDATE products SET name=$1, price=$2, image=$3, category=$4, description=$5 WHERE id=$6 RETURNING *',
-      [name, price, image || '', category, description || '', productId]
+      'UPDATE products SET name=$1, price=$2, original_price=$3, image=$4, images=$5, category=$6, description=$7 WHERE id=$8 RETURNING *',
+      [name, price, original_price || '', primaryImage, imagesJson, category, description || '', productId]
     );
     if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Product not found.' });
     res.json({ success: true, product: result.rows[0] });

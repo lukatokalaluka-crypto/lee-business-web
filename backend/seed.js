@@ -27,11 +27,15 @@ async function seed() {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         price VARCHAR(50) NOT NULL,
+        original_price VARCHAR(50),
         image TEXT,
+        images TEXT,
         category VARCHAR(100) NOT NULL,
         description TEXT
       );
     `);
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS original_price VARCHAR(50);');
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT;');
 
     // Insert or update admin user
     const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);

@@ -72,11 +72,15 @@ const initDb = async () => {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         price VARCHAR(50) NOT NULL,
+        original_price VARCHAR(50),
         image TEXT,
+        images TEXT,
         category VARCHAR(100) NOT NULL,
         description TEXT
       );
     `);
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS original_price VARCHAR(50);');
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT;');
     console.log('✅ PostgreSQL database initialized.');
   } catch (err) {
     console.error('Failed to initialize database:', err.message);
